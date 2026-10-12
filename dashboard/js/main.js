@@ -2,6 +2,7 @@
 import './icons.js';
 import './data.js';
 import './app.js';
+import './calendar-feed.js';
 import './system.js';
 import './slideshow.js';
 import './views/home.js';

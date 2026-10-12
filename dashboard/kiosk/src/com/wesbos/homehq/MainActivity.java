@@ -76,11 +76,16 @@ public class MainActivity extends Activity {
     if (url != null) web.loadUrl(url);
   }
 
-  /** Remote debugging only when explicitly requested; any normal launch turns it back off. */
+  /** Remote debugging only when explicitly requested; any normal launch turns it back off.
+   *  Wrapped in try-catch for WebView 106 on Android 6 which may not support the static call. */
   private void applyDebugFlag(Intent intent) {
     boolean debug = intent != null && intent.getBooleanExtra("debug", false);
-    WebView.setWebContentsDebuggingEnabled(debug);
-    Log.i(TAG, "WebView remote debugging " + (debug ? "ON" : "off"));
+    try {
+      WebView.setWebContentsDebuggingEnabled(debug);
+      Log.i(TAG, "WebView remote debugging " + (debug ? "ON" : "off"));
+    } catch (Exception e) {
+      Log.w(TAG, "Could not set remote debugging: " + e.getMessage());
+    }
   }
 
   /** Watches for the two-finger exit hold; all touches still go to the page. */

@@ -2,7 +2,11 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "home-dashboard",
   "compatibility_date": "2026-09-30",
+  "main": "worker/worker.js",
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
   }
 }
