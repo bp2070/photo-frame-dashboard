@@ -9,7 +9,12 @@
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
     "secret:ics": "wrangler secret put GOOGLE_CAL_ICS_URL",
-    "secret:people": "wrangler secret put GOOGLE_CAL_PEOPLE"
+    "secret:people": "wrangler secret put GOOGLE_CAL_PEOPLE",
+    "secret:admin": "wrangler secret put ADMIN_EMAIL",
+    "secret:oauth": "wrangler secret put GOOGLE_OAUTH_CLIENT_ID",
+    "secret:oauth-secret": "wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET",
+    "secret:auth": "wrangler secret put AUTH_SECRET",
+    "secrets": "bash scripts/set-secrets.sh"
   },
   "devDependencies": {
     "vite": "^8.3.1",

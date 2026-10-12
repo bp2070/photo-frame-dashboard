@@ -1,0 +1,39 @@
+/* Admin panel */
+.admin { display: flex; flex-direction: column; gap: 18px; height: 100%; }
+.ad-head { display: flex; align-items: center; gap: 22px; height: 60px; flex: none; }
+.ad-head .label { font-size: 15px; }
+.ad-head h1 { font-size: 48px; line-height: .95; }
+
+.ad-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+.ad-section { padding: 20px 0; }
+.ad-section > .label { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+
+/* Status */
+.ad-status { display: flex; flex-direction: column; gap: 8px; background: var(--card); border-radius: var(--r); padding: 16px 22px; }
+.ad-stat { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.ad-stat span { font-size: 17px; color: var(--mute); }
+.ad-stat b { font-size: 19px; }
+
+/* People cards */
+.ad-people { display: flex; flex-direction: column; gap: 10px; }
+.ad-person {
+  display: grid; grid-template-columns: 56px 1fr auto; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: var(--r); background: rgb(var(--c-rgb) / .08);
+}
+.ad-avatar {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--c); color: var(--c-ink);
+  font-size: 26px; font-weight: 800;
+}
+.ad-p-fields { display: flex; flex-direction: column; gap: 6px; }
+.ad-input {
+  border: 0; border-bottom: 2px solid var(--ink); background: transparent;
+  font-size: 24px; font-weight: 700; outline: none; padding: 4px 0; width: 100%;
+}
+.ad-p-meta { font-size: 13px; color: var(--mute); display: flex; gap: 12px; }
+.ad-toggle { display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer; }
+.ad-toggle input[type="checkbox"] { width: 20px; height: 20px; }
+
+.ad-footer { flex: none; display: flex; align-items: center; gap: 18px; padding: 14px 0; }
+.ad-saved { font-size: 15px; color: var(--ink); transition: opacity .3s; }
