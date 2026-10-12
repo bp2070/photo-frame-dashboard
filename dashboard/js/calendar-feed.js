@@ -2,145 +2,150 @@
  * Calendar Feed — fetches real events from the Cloudflare Worker and merges
  * them into the dashboard data model.
  *
- * The module replaces `DATA.events` (the mock data) with real events from
- * Google Calendar, while preserving all other mock data (people, chores,
- * shopping, weather). If the feed is unavailable, it falls back to the mock
- * events so the dashboard always works.
+ * The calendar starts blank. If a cached feed response exists in localStorage
+ * it loads instantly; otherwise events appear after the Worker responds.
+ * Fresh events are fetched in the background and the cache is updated.
  *
  * This file MUST be imported after `data.js` and `app.js` in main.js.
  */
 (function () {
   'use strict';
-  const D = window.DATA;
-  if (!D) return; // safety: data.js must be loaded first
+  var D = window.DATA;
+  if (!D) return;
 
-  // Preserve mock events as the fallback
-  const MOCK_EVENTS = D.events.slice();
+  // Start blank — no fake data. Real events come from cache or feed.
+  D.events = [];
+  var CACHE_KEY = 'hq-cal-feed';
 
-  // Person ID → name mapping, used to match Google Calendar Labels (Mom, Dad, Anya, Nora)
-  // to dashboard person IDs (mom, dad, anya, nora). Built from D.people.
+  // Person ID -> name mapping, built from D.people
   function buildPersonMap() {
-    const map = {};
+    var map = {};
     (D.people || []).forEach(function (p) {
-      // Map by name (case-insensitive) and by id
       map[p.name.toLowerCase()] = p.id;
       map[p.id] = p.id;
     });
-    // Also add "family" / "everyone"
     map['family'] = 'family';
     map['everyone'] = 'family';
     return map;
   }
 
-  /**
-   * Fetch events from the Worker API and merge into DATA.events.
-   * Returns true if successful, false otherwise.
-   */
-  async function fetchAndMerge() {
+  // ---- localStorage cache ------------------------------------------------
+
+  function loadCache() {
     try {
-      const url = '/api/calendar/events?days=90';
-      const controller = new AbortController();
-      const timeout = setTimeout(function () { controller.abort(); }, 10000);
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!res.ok) {
-        console.warn('Calendar feed: HTTP ' + res.status);
-        return false;
-      }
-
-      const feedEvents = await res.json();
-      if (!Array.isArray(feedEvents) || feedEvents.length === 0) {
-        console.warn('Calendar feed: empty response');
-        return false;
-      }
-
-      console.log('Calendar feed: loaded', feedEvents.length, 'events');
-
-      const personMap = buildPersonMap();
-
-      // Transform to dashboard event format
-      D.events = feedEvents.map(function (e) {
-        const start = new Date(e.start);
-        const end = new Date(e.end);
-
-        // Map people from Google Calendar Labels
-        let people;
-        if (e.people && e.people.length > 0) {
-          // Already mapped by the Worker
-          people = e.people;
-        } else if (e.categories && e.categories.length > 0) {
-          // Map label names → person IDs
-          people = [];
-          e.categories.forEach(function (label) {
-            const id = personMap[label.toLowerCase()];
-            if (id && id !== 'family') people.push(id);
-          });
-          if (people.length === 0) people = D.ALL.slice();
-        } else {
-          // No labels → assume everyone
-          people = D.ALL.slice();
-        }
-
-        // Deduplicate people
-        const seen = {};
-        people = people.filter(function (p) {
-          const ok = !seen[p];
-          seen[p] = true;
-          return ok;
-        });
-
+      var raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return false;
+      var data = JSON.parse(raw);
+      if (!Array.isArray(data) || data.length === 0) return false;
+      D.events = data.map(function (e) {
         return {
-          id: 'cal_' + e.id.replace(/[^a-zA-Z0-9_-]/g, '_'),
-          start: start,
-          end: end,
-          title: e.title,
-          people: people.length > 0 ? people : D.ALL.slice(),
-          allDay: !!e.allDay,
-          loc: e.location || undefined,
-          notes: e.description ? e.description.replace(/<[^>]+>/g, '').trim() : undefined,
-          travel: undefined, // Google Calendar doesn't have travel time
-          _feed: true, // mark as feed event for potential debugging
+          id: e.id,
+          start: new Date(e.s),
+          end: new Date(e.e),
+          title: e.t,
+          people: e.p || D.ALL.slice(),
+          allDay: e.a || false,
+          loc: e.l || undefined,
+          notes: e.n || undefined,
+          travel: undefined,
+          _feed: true,
         };
       });
-
-      // Sort by start time
       D.events.sort(function (a, b) { return a.start.getTime() - b.start.getTime(); });
-
-      // Notify the app
-      if (window.App && window.App.emit) window.App.emit('data');
-
       return true;
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        console.warn('Calendar feed: timeout');
-      } else {
-        console.warn('Calendar feed: ' + (err.message || 'unknown error'));
-      }
+    } catch (e) {
       return false;
     }
   }
 
-  // ---- Attempt to load on startup ----
-  // Delay slightly to let the app initialize
-  const INIT_DELAY = setTimeout ? 1500 : 0;
+  function saveCache(feedEvents) {
+    try {
+      var data = feedEvents.map(function (e) {
+        return { id: e.id, s: e.start, e: e.end, t: e.title, p: e.people, a: e.allDay, l: e.location, n: e.description };
+      });
+      localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    } catch (e) { /* storage may be full */ }
+  }
 
-  setTimeout(function () {
-    // Run fetch in the background; don't block the UI
-    fetchAndMerge().then(function (ok) {
-      if (!ok && D.events === MOCK_EVENTS) {
-        // Feed failed and we haven't replaced events yet — already on mock data, that's fine
-      } else if (!ok) {
-        // Feed worked before but now failed — keep current data
-        console.warn('Calendar feed refresh failed, using existing data');
+  // ---- Transform feed events -> dashboard format -------------------------
+
+  function applyFeed(feedEvents) {
+    var personMap = buildPersonMap();
+    D.events = feedEvents.map(function (e) {
+      var start = new Date(e.start);
+      var end = new Date(e.end);
+      var people;
+      if (e.people && e.people.length > 0) {
+        people = e.people;
+      } else if (e.categories && e.categories.length > 0) {
+        people = [];
+        e.categories.forEach(function (label) {
+          var id = personMap[label.toLowerCase()];
+          if (id && id !== 'family') people.push(id);
+        });
+        if (people.length === 0) people = D.ALL.slice();
+      } else {
+        people = D.ALL.slice();
       }
+      var seen = {};
+      people = people.filter(function (p) { var ok = !seen[p]; seen[p] = true; return ok; });
+      return {
+        id: 'cal_' + e.id.replace(/[^a-zA-Z0-9_-]/g, '_'),
+        start: start,
+        end: end,
+        title: e.title,
+        people: people.length > 0 ? people : D.ALL.slice(),
+        allDay: !!e.allDay,
+        loc: e.location || undefined,
+        notes: e.description ? e.description.replace(/<[^>]+>/g, '').trim() : undefined,
+        travel: undefined,
+        _feed: true,
+      };
     });
+    D.events.sort(function (a, b) { return a.start.getTime() - b.start.getTime(); });
+    saveCache(feedEvents);
+  }
 
-    // Also refresh every 15 minutes while the app is open
-    setInterval(function () {
-      fetchAndMerge();
-    }, 15 * 60 * 1000);
-  }, INIT_DELAY);
+  // ---- Fetch from Worker -------------------------------------------------
 
-  // Expose the fetcher so it can be called manually (e.g. from the control panel)
+  async function fetchAndMerge() {
+    try {
+      var url = '/api/calendar/events?days=90';
+      var controller = new AbortController();
+      var timeout = setTimeout(function () { controller.abort(); }, 10000);
+      var res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) { console.warn('Calendar feed: HTTP ' + res.status); return false; }
+      var feedEvents = await res.json();
+      if (!Array.isArray(feedEvents) || feedEvents.length === 0) {
+        console.warn('Calendar feed: empty response');
+        return false;
+      }
+      console.log('Calendar feed: loaded ' + feedEvents.length + ' events');
+      applyFeed(feedEvents);
+      if (window.App && window.App.emit) window.App.emit('data');
+      return true;
+    } catch (err) {
+      if (err.name === 'AbortError') console.warn('Calendar feed: timeout');
+      else console.warn('Calendar feed: ' + (err.message || 'unknown error'));
+      return false;
+    }
+  }
+
+  // ---- Startup -----------------------------------------------------------
+  // Phase 1: load cached data immediately (no flash on reload)
+  var cacheLoaded = loadCache();
+  if (cacheLoaded) {
+    console.log('Calendar feed: loaded from cache (' + D.events.length + ' events)');
+    if (window.App && window.App.emit) window.App.emit('data');
+  }
+
+  // Phase 2: fetch fresh data after a brief delay, then keep refreshing
+  setTimeout(function () {
+    fetchAndMerge();
+    setInterval(fetchAndMerge, 15 * 60 * 1000);
+  }, setTimeout ? 500 : 0);
+
+  // Expose manual refresh
   D.refreshCalendar = fetchAndMerge;
 })();

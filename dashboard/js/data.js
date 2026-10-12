@@ -157,61 +157,45 @@ window.DATA = (function () {
   // Mon..Sun, 1 = all chores done, 0 = missed, null = future
   var week = { anya: [1, 1, 0, 1, 1, 0, 1], nora: [1, 0, 1, 1, 1, 1, 0] };
 
-  // ---------------------------------------------------------------- shopping
-  var stores = [{ id: 'grocer', name: 'FreshCo' }, { id: 'costco', name: 'Costco' }];
-  var catOrder = {
-    all: ['Produce', 'Bakery', 'Meat & Fish', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Snacks', 'Household'],
-    grocer: ['Produce', 'Bakery', 'Meat & Fish', 'Dairy & Eggs', 'Pantry', 'Frozen', 'Snacks', 'Household'],
-    costco: ['Household', 'Pantry', 'Snacks', 'Dairy & Eggs', 'Meat & Fish', 'Frozen', 'Produce', 'Bakery']
-  };
+  // ---------------------------------------------------------------- todo list
   var gid = 0;
-  function g(name, cat, qty, store, done, note) {
-    return { id: 'g' + (++gid), name: name, cat: cat, qty: qty, store: store, done: !!done, note: note || '' };
+  function g(name, cat, done, note) {
+    return { id: 'g' + (++gid), name: name, cat: cat, done: !!done, note: note || '' };
   }
   var groceries = [
-    g('Bananas', 'Produce', 1, 'grocer', false, 'Bunch, not too ripe'),
-    g('Baby spinach', 'Produce', 1, 'grocer'),
-    g('Avocados', 'Produce', 3, 'grocer'),
-    g('Honeycrisp apples', 'Produce', 6, 'grocer'),
-    g('Sourdough loaf', 'Bakery', 1, 'grocer'),
-    g('Bagels', 'Bakery', 2, 'costco', false, 'Everything'),
-    g('Chicken thighs', 'Meat & Fish', 1, 'grocer', false, 'Boneless'),
-    g('Salmon fillets', 'Meat & Fish', 2, 'grocer'),
-    g('Milk 2%', 'Dairy & Eggs', 2, 'costco'),
-    g('Eggs', 'Dairy & Eggs', 1, 'costco', false, '2 dozen'),
-    g('Greek yogurt', 'Dairy & Eggs', 1, 'grocer'),
-    g('Aged cheddar', 'Dairy & Eggs', 1, 'grocer'),
-    g('Rigatoni', 'Pantry', 2, 'grocer'),
-    g('Olive oil', 'Pantry', 1, 'costco'),
-    g('Coffee beans', 'Pantry', 1, 'grocer', false, 'Dark roast'),
-    g('Frozen peas', 'Frozen', 1, 'grocer'),
-    g('Waffles', 'Frozen', 1, 'grocer'),
-    g('Goldfish crackers', 'Snacks', 1, 'costco'),
-    g('Granola bars', 'Snacks', 1, 'grocer'),
-    g('Paper towels', 'Household', 1, 'costco'),
-    g('Dish soap', 'Household', 1, 'grocer'),
-    g('Lemons', 'Produce', 2, 'grocer', true),
-    g('Butter', 'Dairy & Eggs', 1, 'grocer', true),
-    g('Tortillas', 'Bakery', 1, 'grocer', true)
+    g('Pick up dry cleaning', 'Errands', false, 'Suit + winter coats'),
+    g('Return library books', 'Errands', false),
+    g('Mail birthday card to Grandma', 'Errands', false),
+    g('Drop off donation box', 'Errands', true),
+    g('Milk', 'To Buy', false, '2%'),
+    g('Bread', 'To Buy', false, 'Sourdough'),
+    g('Eggs', 'To Buy', false, 'Free-range'),
+    g('Snacks for soccer game', 'To Buy', false),
+    g('Bananas', 'To Buy', true),
+    g('Book dentist appointments', 'To Do', false),
+    g('Order new sneakers for Anya', 'To Do', false, 'Size 3'),
+    g('Sign up for spring swimming', 'To Do', false),
+    g('Plan birthday party', 'To Do', false),
+    g('Call plumber about kitchen sink', 'To Do', false),
+    g("Fix Nora's bike chain", 'To Do', true),
+    g('Change furnace filter', 'Home', false),
+    g('Clean out gutters', 'Home', false),
+    g('Replace smoke alarm battery', 'Home', true),
+    g('Submit insurance claim', 'Work', false),
+    g('Send Q3 report', 'Work', true),
   ];
   var catalog = [
-    ['Apples', 'Produce'], ['Avocados', 'Produce'], ['Bananas', 'Produce'], ['Baby spinach', 'Produce'], ['Blueberries', 'Produce'],
-    ['Broccoli', 'Produce'], ['Carrots', 'Produce'], ['Cucumber', 'Produce'], ['Garlic', 'Produce'], ['Grapes', 'Produce'],
-    ['Lemons', 'Produce'], ['Limes', 'Produce'], ['Onions', 'Produce'], ['Potatoes', 'Produce'], ['Strawberries', 'Produce'],
-    ['Tomatoes', 'Produce'], ['Bread', 'Bakery'], ['Bagels', 'Bakery'], ['Croissants', 'Bakery'], ['Sourdough loaf', 'Bakery'],
-    ['Tortillas', 'Bakery'], ['Hamburger buns', 'Bakery'], ['Bacon', 'Meat & Fish'], ['Chicken breasts', 'Meat & Fish'],
-    ['Chicken thighs', 'Meat & Fish'], ['Ground beef', 'Meat & Fish'], ['Salmon fillets', 'Meat & Fish'], ['Shrimp', 'Meat & Fish'],
-    ['Butter', 'Dairy & Eggs'], ['Cheddar', 'Dairy & Eggs'], ['Cream cheese', 'Dairy & Eggs'], ['Eggs', 'Dairy & Eggs'],
-    ['Greek yogurt', 'Dairy & Eggs'], ['Milk 2%', 'Dairy & Eggs'], ['Oat milk', 'Dairy & Eggs'], ['Parmesan', 'Dairy & Eggs'],
-    ['Black beans', 'Pantry'], ['Cereal', 'Pantry'], ['Coffee beans', 'Pantry'], ['Flour', 'Pantry'], ['Honey', 'Pantry'],
-    ['Maple syrup', 'Pantry'], ['Olive oil', 'Pantry'], ['Pasta sauce', 'Pantry'], ['Peanut butter', 'Pantry'], ['Rice', 'Pantry'],
-    ['Rigatoni', 'Pantry'], ['Spaghetti', 'Pantry'], ['Sugar', 'Pantry'], ['Tea', 'Pantry'], ['Frozen peas', 'Frozen'],
-    ['Frozen berries', 'Frozen'], ['Ice cream', 'Frozen'], ['Pizza', 'Frozen'], ['Waffles', 'Frozen'], ['Chips', 'Snacks'],
-    ['Crackers', 'Snacks'], ['Dark chocolate', 'Snacks'], ['Goldfish crackers', 'Snacks'], ['Granola bars', 'Snacks'],
-    ['Popcorn', 'Snacks'], ['Dish soap', 'Household'], ['Dishwasher pods', 'Household'], ['Garbage bags', 'Household'],
-    ['Laundry detergent', 'Household'], ['Paper towels', 'Household'], ['Toilet paper', 'Household'], ['Toothpaste', 'Household']
+    ['Pick up dry cleaning', 'Errands'], ['Return library books', 'Errands'], ['Mail card', 'Errands'], ['Drop off donation', 'Errands'],
+    ['Go to post office', 'Errands'], ['Car wash', 'Errands'], ['Gas up the car', 'Errands'], ['Recycling depot', 'Errands'],
+    ['Milk', 'To Buy'], ['Bread', 'To Buy'], ['Eggs', 'To Buy'], ['Bananas', 'To Buy'], ['Apples', 'To Buy'],
+    ['Coffee beans', 'To Buy'], ['Snacks', 'To Buy'], ['Toothpaste', 'To Buy'], ['Soap', 'To Buy'],
+    ['Book appointment', 'To Do'], ['Order sneakers', 'To Do'], ['Sign up for swimming', 'To Do'],
+    ['Plan party', 'To Do'], ['Call plumber', 'To Do'], ['Fix bike', 'To Do'], ['Schedule haircuts', 'To Do'],
+    ['Submit insurance claim', 'Work'], ['Send report', 'Work'], ['Email team', 'Work'], ['Update resume', 'Work'],
+    ['Change furnace filter', 'Home'], ['Clean gutters', 'Home'], ['Replace smoke alarm', 'Home'], ['Water plants', 'Home'],
+    ['Mow lawn', 'Home'], ['Shovel snow', 'Home'], ['Organize pantry', 'Home'], ['Wash windows', 'Home'],
   ];
-  var usuals = ['Milk 2%', 'Eggs', 'Bananas', 'Bread', 'Apples', 'Coffee beans', 'Greek yogurt', 'Cheddar', 'Butter', 'Baby spinach', 'Chicken thighs', 'Paper towels'];
+  var usuals = ['Milk', 'Bread', 'Eggs', 'Bananas', 'Apples', 'Coffee beans', 'Snacks', 'Toothpaste', 'Soap', 'Book appointment', 'Call plumber', 'Fix bike', 'Water plants', 'Mow lawn'];
 
   // ---------------------------------------------------------------- home control
   var rooms = [
@@ -253,7 +237,7 @@ window.DATA = (function () {
     { id: 'morning', name: 'Morning', icon: 'sunrise', set: { 'k-pend': 100, 'k-under': 80, 'l-blinds': 100, 'l-lamp': 0, 'u-hall': 60 } },
     { id: 'dinner', name: 'Dinner', icon: 'utensils', set: { 'k-pend': 55, 'k-under': 30, 'k-island': 70, 'l-lamp': 40, 'l-ceil': 0 } },
     { id: 'movie', name: 'Movie', icon: 'film', set: { 'k-pend': 0, 'k-under': 15, 'k-island': 0, 'l-lamp': 15, 'l-ceil': 0, 'l-blinds': 0, 'l-fire': 30 } },
-    { id: 'away', name: 'Away', icon: 'away', set: { 'k-pend': 0, 'k-under': 0, 'k-island': 0, 'l-lamp': 0, 'l-ceil': 0, 'l-fire': 0, 'u-maya': 0, 'u-hall': 0, 'e-porch': 100 } },
+    { id: 'away', name: 'Away', icon: 'away', set: { 'k-pend': 0, 'k-under': 0, 'k-island': 0, 'l-lamp': 0, 'l-ceil': 0, 'l-fire': 0, 'u-anya': 0, 'u-hall': 0, 'e-porch': 100 } },
     { id: 'night', name: 'Goodnight', icon: 'moon', set: { 'k-pend': 0, 'k-under': 10, 'k-island': 0, 'l-lamp': 0, 'l-ceil': 0, 'l-fire': 0, 'u-hall': 10, 'u-nora': 15, 'e-porch': 0 } }
   ];
 
@@ -341,7 +325,7 @@ window.DATA = (function () {
     people: people, family: family, ALL: ALL,
     events: events, busyExtras: busyExtras,
     routines: routines, chores: chores, stars: stars, week: week,
-    stores: stores, catOrder: catOrder, groceries: groceries, catalog: catalog, usuals: usuals,
+    groceries: groceries, catalog: catalog, usuals: usuals,
     rooms: rooms, devices: devices, climate: climate, media: media, cameras: cameras, scenes: scenes,
     weather: weather, photos: photos, agents: agents,
     _gid: function () { return 'g' + (++gid); },
